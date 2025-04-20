@@ -1,0 +1,417 @@
+/* ===== Add/Edit Schedule Page Styles ===== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+
+:root {
+  --sidebar-bg: #ffa8a7;
+  --sidebar-accent: #e07c81;
+  --content-bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --text-dark: #333333;
+  --text-light: #ffffff;
+  --success: #4CAF50;
+  --warning: #FFC107;
+  --danger: #f44336;
+  --info: #2196F3;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  display: flex;
+  min-height: 100vh;
+  background: url('/static/images/mainbg.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--text-dark);
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 250px;
+  background: var(--sidebar-bg);
+  color: var(--text-light);
+  padding: 2rem 1.5rem;
+  position: fixed;
+  height: 100vh;
+  transition: all 0.3s;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 2rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.avatar {
+  font-size: 3.5rem;
+  color: rgba(255,255,255,0.9);
+}
+
+.user-profile h1 {
+  font-size: 1.5rem;
+  margin-top: 1rem;
+  color: var(--text-light);
+}
+
+.user-profile p {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.7);
+}
+
+.decorative-line {
+  height: 2px;
+  background: rgba(255,255,255,0.2);
+  margin: 1rem 0;
+}
+
+/* Navigation Menu */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.nav-items-container {
+  flex-grow: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.8);
+  text-decoration: none;
+  transition: all 0.3s;
+  margin-bottom: 0.5rem;
+}
+
+.nav-item:hover, .nav-item.active {
+  background: var(--sidebar-accent);
+  color: var(--text-light);
+}
+
+.nav-item img.button-icon {
+  width: 24px;
+  margin-right: 12px;
+}
+
+/* Logout Button */
+.logout-container {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+/* ===== Main Content ===== */
+.top-box {
+  margin-left: 250px;
+  width: calc(100% - 250px);
+  padding: 2rem;
+  max-width: 1600px;
+}
+
+.top-box h3 {
+  font-size: 1.8rem;
+  color: var(--danger);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.line-box {
+  height: 2px;
+  background: var(--sidebar-accent);
+  margin: 1rem 0;
+  width: 100%;
+}
+
+/* Schedule Box */
+.schedule-box {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  overflow-x: auto;
+}
+
+#scheduleTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+#scheduleTable th, #scheduleTable td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+#scheduleTable th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+#scheduleTable select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 100%;
+  font-size: 1rem;
+}
+
+#scheduleTable input[type="time"] {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+#scheduleTable td[contenteditable="true"] {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  min-width: 100px;
+}
+
+#scheduleTable td[contenteditable="true"]:focus {
+  outline: none;
+  border-color: var(--sidebar-accent);
+  box-shadow: 0 0 0 2px rgba(224, 124, 129, 0.2);
+}
+
+/* Action Buttons */
+.add-btn, .remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0.5rem;
+  transition: all 0.3s;
+}
+
+.add-btn {
+  color: var(--success);
+}
+
+.add-btn:hover {
+  transform: scale(1.2);
+}
+
+.remove-btn {
+  color: var(--danger);
+}
+
+.remove-btn:hover {
+  transform: scale(1.2);
+}
+
+/* Control Buttons */
+.button-group {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+#addRowBtn, button[onclick="clearAllRows()"] {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+ 
+ 
+  font-weight: 500;
+  transition: all 0.3s;
+  margin-right: 1rem;
+}
+
+#addRowBtn {
+  background: var(--sidebar-accent);
+  color: white;
+}
+
+#addRowBtn:hover {
+  background: #d1182d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+button[onclick="clearAllRows()"] {
+  background: #e0e0e0;
+  color: var(--text-dark);
+}
+
+button[onclick="clearAllRows()"]:hover {
+  background: #bdbdbd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Logout Popover */
+#logoutPopover {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  z-index: 1100;
+  padding: 2rem;
+  width: 90%;
+  max-width: 400px;
+  display: none;
+}
+
+#logoutPopover:target {
+  display: block;
+}
+
+#logoutPopover:target::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1099;
+}
+
+.popover-content {
+  text-align: center;
+}
+
+.popover-content p {
+  margin-bottom: 1.5rem;
+  color: var(--text-dark);
+}
+
+.popover-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.confirm-btn, .cancel-btn {
+  padding: 0.7rem 1.5rem;
+  border-radius: 5px;
+  font-weight: 500;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.confirm-btn {
+  background: var(--danger);
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #d32f2f;
+}
+
+.cancel-btn {
+  background: #e0e0e0;
+  color: var(--text-dark);
+}
+
+.cancel-btn:hover {
+  background: #bdbdbd;
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    padding: 1rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .user-profile {
+    display: none;
+  }
+
+  .decorative-line {
+    display: none;
+  }
+
+  .nav-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .nav-items-container {
+    display: contents;
+  }
+
+  .nav-item {
+    flex-direction: column;
+    padding: 0.7rem;
+    font-size: 0.8rem;
+    margin-bottom: 0;
+  }
+
+  .nav-item img.button-icon {
+    margin-right: 0;
+    margin-bottom: 5px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .logout-container {
+    margin-left: auto;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .top-box {
+    margin-left: 0;
+    width: 100%;
+    padding: 1.5rem;
+  }
+
+  #scheduleTable th, #scheduleTable td {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
+
+  #addRowBtn, button[onclick="clearAllRows()"] {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-item {
+    width: 80px;
+    padding: 0.5rem 0.3rem !important;
+  }
+
+  #scheduleTable {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

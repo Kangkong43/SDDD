@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: url('/static/images/mainbg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #333;
+    flex-direction: column;
+}
+
+.front-page {
+    position: relative;
+    width: 90%;
+    max-width: 1000px;
+    padding: 30px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+    display: block;
+}
+
+.front-image2 {
+    position: absolute;
+    top: -90px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150px;
+    height: auto;
+}
+
+h1 {
+    font-size: 4rem;
+    color: #d1182d;
+    display: flex;
+    align-items: center; 
+    justify-content: center;  
+    gap: 20px;  
+}
+
+h1 img.facultime-logo {
+    width: 90px;  
+    height: auto;
+}
+
+
+button {
+    padding: 12px 30px;
+    font-size: 20px;
+    background: #e17674;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #d1182d;
+}
+
+p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+
+@media (max-width: 768px) {
+    
+    .front-page {
+        width: 95%;
+        padding: 20px;
+    }
+
+    
+    h1 {
+        font-size: 3rem;
+    }
+
+    h1 img.facultime-logo {
+        width: 70px; 
+    }
+
+   
+    button {
+        font-size: 18px;
+        padding: 10px 25px;
+    }
+
+  
+    p {
+        font-size: 16px;
+    }
+
+   
+    .front-image2 {
+        width: 120px;
+    }
+}
+
+
+@media (max-width: 480px) {
+  
+    .front-page {
+        width: 100%;
+        padding: 15px;
+    }
+
+   
+    h1 {
+        font-size: 2.5rem;
+    }
+
+    h1 img.facultime-logo {
+        width: 60px; 
+    }
+
+    
+    button {
+        font-size: 16px;
+        padding: 8px 20px;
+    }
+
+  
+    p {
+        font-size: 14px;
+    }
+
+ 
+    .front-image2 {
+        width: 100px; 
+    }
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout | FaculTime</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/plogout.css') }}">
+</head>
+<body>
+    <div class="professor_dashboard">
+        <h1>{{ user.name | upper }}</h1>
+        <p>{{ user.role | upper }}</p>
+    </div>
+<body>
+    <div class="features">
+        <button onclick="window.location.href='/professor_dashboard'">
+            <img src="{{ url_for('static', filename='images/dashboard1.png') }}" class="button-icon"> DASHBOARD
+        </button>
+        <button onclick="window.location.href='/pbookAppointment'">
+            <img src="{{ url_for('static', filename='images/bookanappointment1.png') }}" class="button-icon"> ADD/EDIT SCHEDULE
+        </button>
+     
+        <button onclick="window.location.href='/paccountSettings'">
+            <img src="{{ url_for('static', filename='images/accsettings1.png') }}" class="button-icon"> ACCOUNT SETTINGS
+        </button>
+        <button onclick="window.location.href='/pnotification'">
+            <img src="{{ url_for('static', filename='images/notification1.png') }}" class="button-icon"> NOTIFICATION
+        </button>
+   <!---->     
+        <a href="#logoutPopover" class="logout-btn">
+            <button>
+                <img src="static/images/logout1.png" alt="Logout Icon" class="button-icon">
+                LOGOUT
+            </button>
+        </a>
+    </div>
+    
+   
+    <div id="logoutPopover" class="popover">
+        <div class="popover-content">
+            <p>Are you sure you want to log out?</p>
+            <a href="/plogout" class="confirm-btn">Yes</a>
+            <a href="#" class="cancel-btn">No</a>
+        </div>
+    </div>
+
+    </div>
+</body>
+    <div class="top-box">
+        <h3>LOGOUT</h3>
+    </div>  
+<body>
+    
+
+
+</html>

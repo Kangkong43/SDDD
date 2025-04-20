@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings | FaculTime</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/saccountsetting.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="user-profile">
+            <div class="avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h1>{{ user.name | upper }}</h1>
+            <p>{{ user.role | upper }}</p>
+        </div>
+
+
+        
+    <div class="decorative-line">
+            
+    </div>
+    <nav class="nav-menu">
+        <div class="nav-items-container">
+        <a href="/student_dashboard" class="nav-item ">
+            <img src="static/images/dashboard1.png" alt="Dashboard" class="button-icon">
+            <span>Dashboard</span>
+        </a>
+        <a href="/sbook_appointment" class="nav-item">
+            <img src="static/images/bookanappointment1.png" alt="Book Appointment" class="button-icon">
+            <span>Book Appointment</span>
+        </a>
+        <a href="/saccount_settings" class="nav-item active">
+            <img src="static/images/accsettings1.png" alt="Settings" class="button-icon">
+            <span>Account Settings</span>
+        </a>
+        <a href="/snotification" class="nav-item">
+            <img src="static/images/notification1.png" alt="Notifications" class="button-icon">
+            <span>Notifications</span>
+        </a>
+    </div>
+        <div class="logout-container">
+        <a href="#logoutPopover" class="nav-item logout-btn">
+            <img src="static/images/logout1.png" alt="Logout" class="button-icon">
+            <span>Logout</span>
+        </a>
+        </div>
+    </nav>
+</div>
+    
+  
+<div id="logoutPopover" class="popover">
+    <div class="popover-content">
+        <p>Are you sure you want to log out?</p>
+        <div class="popover-actions">
+            <a href="/slogout" class="confirm-btn">Yes</a>
+            <a href="#" class="cancel-btn">No</a>
+        </div>
+    </div>
+</div>
+        
+        <!-- Main Content -->
+        <div class="content">
+            <div class="account-settings-container">
+                <div class="top-box">
+                    <h3><i class="fas fa-user-cog"></i> ACCOUNT SETTINGS</h3>
+                    
+                    <div class="line-box"></div>
+                    
+                    <form action="/saccount_settings" method="POST" enctype="multipart/form-data" class="settings-form">
+                        <!-- Profile Picture Section -->
+                        <div class="profile-section">
+                            <label for="profile-pic">PROFILE PICTURE:</label>
+                            <div class="profile-picture-container">
+                                <img id="profile-preview" 
+                                     src="{{ url_for('static', filename='uploads/' + user.profile_picture) if user.profile_picture else url_for('static', filename='images/default.png') }}" 
+                                     alt="Profile Picture">
+                                <div class="upload-controls">
+                                    <label for="profile-pic" class="upload-btn">
+                                        <i class="fas fa-camera"></i> Change Photo
+                                    </label>
+                                    <input type="file" id="profile-pic" name="profile_pic" accept="image/*" onchange="previewImage(event)">
+                                    <p class="file-hint">JPG or PNG, max 2MB</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Personal Information -->
+                        <div class="form-section">
+                            <div class="input-group">
+                                <label for="name">
+                                    <i class="fas fa-user"></i> Name:
+                                </label>
+                                <input type="text" id="name" name="name" value="{{ user.name }}" placeholder="Enter your name">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="email">
+                                    <i class="fas fa-envelope"></i> Email:
+                                </label>
+                                <input type="email" id="email" name="email" value="{{ user.email }}" placeholder="Enter your email">
+                            </div>
+                        </div>
+                        
+                        <!-- Password Section -->
+                        <div class="form-section">
+                            <div class="input-group">
+                                <label for="password">
+                                    <i class="fas fa-lock"></i> New Password:
+                                </label>
+                                <div class="password-input">
+                                    <input type="password" id="password" name="password" placeholder="Enter new password">
+                                    <i class="fas fa-eye toggle-password"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="confirm-password">
+                                    <i class="fas fa-lock"></i> Confirm Password:
+                                </label>
+                                <div class="password-input">
+                                    <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm new password">
+
+                                    <i class="fas fa-eye toggle-password"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="save-btn">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            <button type="button" class="cancel-btn-settings" onclick="window.history.back()">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Popup -->
+    <div id="logoutPopover" class="popover">
+        <div class="popover-content">
+            <h4>Confirm Logout</h4>
+            <p>Are you sure you want to log out?</p>
+            <div class="popover-actions">
+                <a href="/slogout" class="confirm-btn">Yes</a>
+                <a href="#" class="cancel-btn">No</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('.settings-form').addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent default form submission
+
+        const form = this;
+        const formData = new FormData(form);
+
+        fetch('/saccount_settings', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json()) 
+        .then(data => {
+            if (data.message) {
+                alert(data.message);
+                window.location.reload(); 
+            } else if (data.error) {
+                alert(data.error); 
+            }
+        })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during the update.');
+            });
+        });
+
+        // Profile picture preview
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const output = document.getElementById('profile-preview');
+                output.src = reader.result;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        // Toggle password visibility
+        document.querySelectorAll('.toggle-password').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                this.classList.toggle('fa-eye-slash');
+            });
+        });
+
+        // Form validation
+        document.querySelector('.settings-form').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (password && password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+            }
+        });
+    </script>
+</body>
+</html>

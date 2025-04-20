@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard | FaculTime</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/studentdash.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="user-profile">
+            <div class="avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h1>{{ user.name | upper }}</h1>
+            <p>{{ user.role | upper }}</p>
+        </div>
+        <div class="decorative-line">
+            
+        </div>
+        
+        <nav class="nav-menu">
+            <div class="nav-items-container">
+            <a href="/student_dashboard" class="nav-item active">
+                <img src="static/images/dashboard1.png" alt="Dashboard" class="button-icon">
+                <span>Dashboard</span>
+            </a>
+            <a href="/sbook_appointment" class="nav-item">
+                <img src="static/images/bookanappointment1.png" alt="Book Appointment" class="button-icon">
+                <span>Book Appointment</span>
+            </a>
+            <a href="/saccount_settings" class="nav-item">
+                <img src="static/images/accsettings1.png" alt="Settings" class="button-icon">
+                <span>Account Settings</span>
+            </a>
+            <a href="/snotification" class="nav-item">
+                <img src="static/images/notification1.png" alt="Notifications" class="button-icon">
+                <span>Notifications</span>
+            </a>
+        </div>
+            <div class="logout-container">
+            <a href="#logoutPopover" class="nav-item logout-btn">
+                <img src="static/images/logout1.png" alt="Logout" class="button-icon">
+                <span>Logout</span>
+            </a>
+        </div>
+        </nav>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <div class="header">
+            <h2>Dashboard Overview</h2>
+            <div class="date-display">
+                <i class="far fa-calendar-alt"></i>
+                <span id="current-date"></span>
+            </div>
+        </div>
+
+        <!-- Stats Cards Grid -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-content">
+                    <div class="stat-value">{{ total_count }}</div>
+                    <div class="stat-label">Total Appointments</div>
+                </div>
+                <div class="stat-icon">
+                    <img src="static/images/totalappointments1.png" alt="Total">
+                </div>
+                <button class="more-info" id="totalModalBtn">View All</button>
+            </div>
+            
+            <div class="stat-card approved">
+                <div class="stat-content">
+                    <div class="stat-value">{{ approved_count }}</div>
+                    <div class="stat-label">Approved</div>
+                </div>
+                <div class="stat-icon">
+                    <img src="static/images/acceptedappointments1.png" alt="Approved">
+                </div>
+                <button class="more-info" id="acceptedModalBtn">View All</button>
+            </div>
+            
+            <div class="stat-card pending">
+                <div class="stat-content">
+                    <div class="stat-value">{{ pending_count }}</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-icon">
+                    <img src="static/images/pendingappointments1.png" alt="Pending">
+                </div>
+                <button class="more-info" id="pendingModalBtn">View All</button>
+            </div>
+            
+            <div class="stat-card rejected">
+                <div class="stat-content">
+                    <div class="stat-value">{{ rejected_count }}</div>
+                    <div class="stat-label">Rejected</div>
+                </div>
+                <div class="stat-icon">
+                    <img src="static/images/declinedappointments1.png" alt="Rejected">
+                </div>
+                <button class="more-info" id="declinedModalBtn">View All</button>
+            </div>
+        </div>
+
+        <!-- Pending Appointments Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h3 class="section-title">Pending Appointments</h3>
+                <div class="section-actions">
+                </div>
+            </div>
+            
+            <div class="appointment-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Instructor</th>
+                            <th>Office</th>
+                            <th>Time Slot</th>
+                            <th>Day</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments if appointment.status == 'Pending' %}
+                            <tr>
+                                <td>{{ appointment.name }}</td>
+                                <td>{{ appointment.office }}</td>
+                                <td>{{ appointment.formatted_time }}</td>
+                                <td>{{ appointment.appointment_date }}</td>
+                                <td>{{ appointment.purpose }}</td>
+                                <td class="status-pending">{{ appointment.status }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6">No pending appointments found</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Activity Section -->
+       
+
+    <!-- Logout Confirmation Popover -->
+    <div id="logoutPopover" class="popover">
+        <div class="popover-content">
+            <p>Are you sure you want to log out?</p>
+            <div class="popover-actions">
+                <a href="/slogout" class="confirm-btn">Yes</a>
+                <a href="#" class="cancel-btn">No</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Windows (same as before) -->
+    <div id="totalModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>All Appointments </h3>
+            <div class="modal-appointment-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Instructor's Name</th>
+                            <th>Office</th>
+                            <th>Time Slot</th>
+                            <th>Day</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td>{{ appointment.name }}</td>
+                            <td>{{ appointment.office }}</td>
+                            <td>{{ appointment.formatted_time }}</td>
+                            <td>{{ appointment.appointment_date }}</td>
+                            <td>{{ appointment.purpose }}</td>
+                            <td class="status-{{ appointment.status|lower }}">{{ appointment.status }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6">No appointments found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="acceptedModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Approved Appointments </h3>
+            <div class="modal-appointment-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Instructor's Name</th>
+                            <th>Office</th>
+                            <th>Time Slot</th>
+                            <th>Day</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments if appointment.status == 'Approved' %}
+                        <tr>
+                            <td>{{ appointment.name }}</td>
+                            <td>{{ appointment.office }}</td>
+                            <td>{{ appointment.formatted_time }}</td>
+                            <td>{{ appointment.appointment_date }}</td>
+                            <td>{{ appointment.purpose }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5">No approved appointments</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    
+
+        <div id="pendingModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Pending Appointments </h3>
+                <div class="modal-appointment-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Instructor's Name</th>
+                                <th>Office</th>
+                                <th>Time Slot</th>
+                                <th>Day</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in appointments if appointment.status == 'Pending' %}
+                            <tr>
+                                <td>{{ appointment.name }}</td>
+                                <td>{{ appointment.office }}</td>
+                                <td>{{ appointment.formatted_time }}</td>
+                                <td>{{ appointment.appointment_date }}</td>
+                                <td>{{ appointment.purpose }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5">No pending appointments</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>    
+    </div>
+    
+    <div id="declinedModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Rejected Appointments </h3>
+            <div class="modal-appointment-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Instructor's Name</th>
+                            <th>Office</th>
+                            <th>Time Slot</th>
+                            <th>Day</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments if appointment.status == 'Rejected' %}
+                        <tr>
+                            <td>{{ appointment.name }}</td>
+                            <td>{{ appointment.office }}</td>
+                            <td>{{ appointment.formatted_time }}</td>
+                            <td>{{ appointment.appointment_date }}</td>
+                            <td>{{ appointment.purpose }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5">No rejected appointments</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Current date display
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+
+        // Modal functionality (same as before)
+        document.addEventListener('DOMContentLoaded', function() {
+            const modals = {
+                total: document.getElementById("totalModal"),
+                approved: document.getElementById("acceptedModal"),
+                pending: document.getElementById("pendingModal"),
+                rejected: document.getElementById("declinedModal")
+            };
+
+            const buttons = {
+                total: document.getElementById("totalModalBtn"),
+                approved: document.getElementById("acceptedModalBtn"),
+                pending: document.getElementById("pendingModalBtn"),
+                rejected: document.getElementById("declinedModalBtn")
+            };
+
+            Object.keys(modals).forEach(key => {
+                if (buttons[key]) {
+                    buttons[key].onclick = function() {
+                        modals[key].style.display = "block";
+                    }
+                }
+
+                if (modals[key]) {
+                    modals[key].querySelector('.close').onclick = function() {
+                        modals[key].style.display = "none";
+                    }
+                }
+            });
+
+            window.onclick = function(event) {
+                Object.keys(modals).forEach(key => {
+                    if (event.target == modals[key]) {
+                        modals[key].style.display = "none";
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    Object.keys(modals).forEach(key => {
+                        modals[key].style.display = "none";
+                    });
+                }
+            });
+
+
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

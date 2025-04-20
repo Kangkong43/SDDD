@@ -1,0 +1,422 @@
+   /* ===== Base Styles ===== */
+   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+   :root {
+       --sidebar-bg: #ffa8a7;
+       --sidebar-accent: #e07c81;
+       --content-bg: #f8f9fa;
+       --card-bg: #ffffff;
+       --text-dark: #333333;
+       --text-light: #ffffff;
+       --success: #4CAF50;
+       --warning: #FFC107;
+       --danger: #f44336;
+       --info: #2196F3;
+   }
+
+   * {
+       margin: 0;
+       padding: 0;
+       box-sizing: border-box;
+       font-family: "Poppins", sans-serif;
+   }
+
+   body {
+       display: flex;
+       min-height: 100vh;
+       background: url('/static/images/mainbg.jpg') no-repeat center center fixed;
+       background-size: cover;
+       color: var(--text-dark);
+   }
+        /* ===== Sidebar ===== */
+        .sidebar {
+            width: 250px;
+            background: var(--sidebar-bg);
+            color: var(--text-light);
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            transition: all 0.3s;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-profile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .avatar {
+            font-size: 3.5rem;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .user-profile h1 {
+            font-size: 1.5rem;
+            margin-top: 1rem;
+            color: var(--text-light);
+        }
+
+        .user-profile p {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .decorative-line {
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+            margin: 1rem 0;
+        }
+
+        /* Navigation Menu */
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .nav-items-container {
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--sidebar-accent);
+            color: var(--text-light);
+        }
+
+        .nav-item img.button-icon {
+            width: 24px;
+            margin-right: 12px;
+        }
+
+        /* Logout Button */
+        .logout-container {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+          }
+          
+        /* ===== Main Content ===== */
+        .top-box {
+            margin-left: 500px;
+            width: calc(100% - 500px);
+            padding: 2rem;
+            max-width: 1200px;
+        }
+
+        .top-box h3 {
+            font-size: 28px;
+            color: #d1182d;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .line-box {
+            height: 2px;
+            background: var(--sidebar-accent);
+            margin: 1rem 0;
+            width: 100%;
+        }
+       
+        /* Account Settings Form */
+        .settings-form {
+            background: white;
+            border-radius: 10px;
+            width: 1000px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-section {
+            margin-bottom: 2rem;
+        }
+
+        .profile-section label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .profile-picture-container {
+            justify-content: center;  /* Center horizontally */
+            align-items: flex-start; 
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        #profile-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--sidebar-accent);
+        }
+
+        .upload-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .upload-btn {
+            background: var(--sidebar-accent);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: fit-content;
+        }
+
+        .upload-btn:hover {
+            background: #d1182d;
+        }
+
+        #profile-pic {
+            display: none;
+        }
+
+        .file-hint {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .password-input {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .save-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--sidebar-accent);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .save-btn:hover {
+            background: #d1182d;
+        }
+
+        .cancel-btn-settings {
+            padding: 0.8rem 1.5rem;
+            background: #e0e0e0;
+            color: var(--text-dark);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .cancel-btn-settings:hover {
+            background: #bdbdbd;
+        }
+
+        /* Logout Popover */
+        #logoutPopover {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1100;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            display: none;
+        }
+
+        #logoutPopover:target {
+            display: block;
+        }
+
+     
+
+        .popover-content {
+            text-align: center;
+        }
+
+        .popover-content p {
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+        }
+
+        .popover-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .confirm-btn, .cancel-btn {
+            padding: 0.7rem 1.5rem;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .confirm-btn {
+            background: var(--danger);
+            color: white;
+        }
+
+        .confirm-btn:hover {
+            background: #d32f2f;
+        }
+
+        .cancel-btn {
+            background: #e0e0e0;
+            color: var(--text-dark);
+        }
+
+        .cancel-btn:hover {
+            background: #bdbdbd;
+        }
+
+        /* ===== Responsive Adjustments ===== */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 1rem;
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            .user-profile {
+                display: none;
+            }
+
+            .decorative-line {
+                display: none;
+            }
+
+            .nav-menu {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .nav-items-container {
+                display: contents;
+            }
+
+            .nav-item {
+                flex-direction: column;
+                padding: 0.7rem;
+                font-size: 0.8rem;
+                margin-bottom: 0;
+            }
+
+            .nav-item img.button-icon {
+                margin-right: 0;
+                margin-bottom: 5px;
+                width: 20px;
+                height: 20px;
+            }
+
+            .logout-container {
+                margin-left: auto;
+                padding-top: 0;
+                border-top: none;
+            }
+
+            .top-box {
+                margin-left: 0;
+                width: 100%;
+                padding: 1.5rem;
+            }
+
+            .profile-picture-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .settings-form {
+              
+                width: 550px;
+             
+            }
+            .upload-btn {
+                width: 100%;
+            }
+        }

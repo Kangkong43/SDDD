@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | FaculTime</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login_register.css') }}">
+</head>
+<body>
+    <div class="form-container">
+        <form action="/register" method="POST" onsubmit="return validateForm()">
+            <h2>REGISTER</h2>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alert">{{ messages[0] }}</div>
+                {% endif %}
+            {% endwith %}
+
+            <input type="text" name="name" id="name" placeholder="Full Name" required>
+            <input type="email" name="email" id="email" placeholder="Email" required>
+            <input type="password" name="password" id="password" placeholder="Password" required minlength="6">
+            <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="6">
+            
+            <select name="role" id="role" required>
+                <option value="">--Select Role--</option>
+                <option value="student">Student</option>
+                <option value="professor">Professor</option>
+            </select>
+
+            <button type="submit">Register</button>
+            <p>Already have an account? <a href="/login">Login</a></p>
+        </form>
+    </div>
+
+    <script>
+        function validateForm() {
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+
+            if (password !== confirmPassword) {
+                alert("Passwords do not match.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment | FaculTime</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sbookappointment.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="user-profile">
+            <div class="avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h1>{{ user.name | upper }}</h1>
+            <p>{{ user.role | upper }}</p>
+        </div>
+
+
+        
+    <div class="decorative-line">
+            
+    </div>
+    <nav class="nav-menu">
+        <div class="nav-items-container">
+        <a href="/student_dashboard" class="nav-item">
+            <img src="static/images/dashboard1.png" alt="Dashboard" class="button-icon">
+            <span>Dashboard</span>
+        </a>
+        <a href="/sbook_appointment" class="nav-item active">
+            <img src="static/images/bookanappointment1.png" alt="Book Appointment" class="button-icon">
+            <span>Book Appointment</span>
+        </a>
+        <a href="/saccount_settings" class="nav-item">
+            <img src="static/images/accsettings1.png" alt="Settings" class="button-icon">
+            <span>Account Settings</span>
+        </a>
+        <a href="/snotification" class="nav-item">
+            <img src="static/images/notification1.png" alt="Notifications" class="button-icon">
+            <span>Notifications</span>
+        </a>
+    </div>
+        <div class="logout-container">
+        <a href="#logoutPopover" class="nav-item logout-btn">
+            <img src="static/images/logout1.png" alt="Logout" class="button-icon">
+            <span>Logout</span>
+        </a>
+        </div>
+    </nav>
+</div>
+   
+<div id="logoutPopover" class="popover">
+    <div class="popover-content">
+        <p>Are you sure you want to log out?</p>
+        <div class="popover-actions">
+            <a href="/slogout" class="confirm-btn">Yes</a>
+            <a href="#" class="cancel-btn">No</a>
+        </div>
+    </div>
+</div>
+
+    <div class="top-box">
+        <h3>BOOK AN APPOINTMENT</h3>
+    
+        <div class="faculty-list-box">
+            <h4>Instructor List</h4>
+            <div class="search-container">
+                <input type="text" id="instructorSearch" placeholder="Search instructor..." class="search-input" onkeyup="searchInstructors()">
+                <button class="search-button" onclick="searchInstructors()">Search</button>
+            </div>
+        </div>
+    
+        <div class="instructor-list">
+            {% for professor in professors %}
+            <div class="instructor-card">
+                <div class="instructor-name">{{ professor[1] }}</div>
+                <!-- Pass professor's id and name to the function -->
+                <button class="schedule-button" onclick="openScheduleModal('{{ professor[0] }}', '{{ professor[1] }}')">View Schedule</button>
+            </div>
+            {% endfor %}
+        </div>
+    
+      <!-- Schedule Modal -->
+<div id="scheduleModal" class="popover">
+    <div class="popup-header">Faculty Schedule</div>
+    <div class="popover-content">
+        <h4 id="prof-name">Professor Name</h4>
+        <table class="popup-table">
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Time Slot</th>
+                    <th>Office</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body">
+          
+            </tbody>
+        </table>
+        <div class="modal-actions-schedule">
+           
+            <button type="button" class="cancel-btn" onclick="closeScheduleModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Details Modal  -->
+<div id="bookingDetailsModal" class="popover">
+    <div class="popup-headerb">Appointment Schedule</div>
+    <div class="popover-contentb">
+       
+        <form id="booking-form">
+
+        <input type="hidden" id="professor-id" name="professor_id" value="">
+        <input type="hidden" id="office-input" name="office" value=""> <!-- Hidden input for office data -->
+        <div>
+            <label for="appointment-day">Day of Appointment:</label>
+            <input type="text" id="appointment-day" name="appointment_day" readonly>
+          </div>          
+      
+        <div>
+          <label for="appointment-time">Time of Appointment:</label>
+          <input type="time" id="appointment-time" name="appointment_time" required step="900"> 
+        </div>
+      
+        <div>
+          <label for="purpose">Purpose of Appointment:</label>
+          <input type="text" id="purpose" name="purpose" required placeholder="Enter purpose">
+        </div>
+      
+        <div class="modal-actions-booking">
+          <button type="submit" class="confirm-button">Confirm</button>
+          <button type="button" class="cancel-booking" onclick="closeBookingDetailsModal()">Cancel</button>
+        </div>
+      </form>
+      
+    </div>
+  </div>
+  
+
+<script>
+function searchInstructors() {
+    const input = document.getElementById('instructorSearch');
+    const filter = input.value.toLowerCase();
+    const cards = document.querySelectorAll('.instructor-card');
+    
+    cards.forEach(card => {
+        const name = card.querySelector('.instructor-name').textContent.toLowerCase();
+        card.style.display = name.includes(filter) ? 'flex' : 'none';
+    });
+}
+function openScheduleModal(profId, profName) {
+   
+    document.getElementById('prof-name').textContent = profName;
+
+    document.getElementById('professor-id').value = profId;
+
+    
+    fetch(`/get_schedule/${profId}`)
+        .then(response => response.json())
+        .then(data => {
+
+            let tableBody = document.getElementById('schedule-body');
+            tableBody.innerHTML = ''; 
+
+            if (data.success) {
+                data.schedules.forEach(row => {
+                    let newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td>${row.day}</td>
+                        <td>${row.start_time} - ${row.end_time}</td>
+                        <td>${row.office}</td>
+                        <td><button type="button" class="book-button" onclick="openBookingDetailsModal('${row.day}', '${row.start_time}', '${row.end_time}', '${row.office}')">Book</button></td>
+                    `;
+                    tableBody.appendChild(newRow);
+                });
+            } else {
+                alert("No schedule found.");
+            }
+        });
+
+   
+    document.getElementById('scheduleModal').style.display = 'block';
+    document.getElementById('scheduleModal').style.opacity = '1';
+}
+
+document.getElementById('booking-form').addEventListener('submit', function (e) {
+    e.preventDefault(); 
+
+    const formData = new FormData(this);
+
+    fetch('/book_appointment', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            closeBookingDetailsModal(); 
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(err => {
+        alert('An unexpected error occurred.');
+        console.error(err);
+    });
+});
+
+
+
+function closeScheduleModal() {
+    document.getElementById('scheduleModal').style.display = 'none';
+}
+
+
+function openBookingDetailsModal(day, startTime, endTime, office) {
+    const bookingForm = document.getElementById('booking-form');
+    document.getElementById('appointment-time').value = startTime;
+    document.getElementById('appointment-time').min = startTime;
+    document.getElementById('appointment-time').max = endTime;
+     // Only set startTime
+    document.getElementById('purpose').value = '';
+    document.getElementById('office-input').value = office;
+    document.getElementById('appointment-day').value = day;
+    document.getElementById('bookingDetailsModal').style.display = 'block';
+    document.getElementById('bookingDetailsModal').style.opacity = '1';
+}
+
+
+function closeBookingDetailsModal() {
+    document.getElementById('bookingDetailsModal').style.display = 'none'; 
+}
+
+  function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    
+    function clearUrlParams() {
+        const url = new URL(window.location.href);
+        url.search = '';
+        window.history.replaceState({}, '', url); 
+    }
+
+    window.onload = function() {
+        const status = getQueryParam('status');
+        const message = getQueryParam('message');
+
+        if (status && message) {
+        
+            if (status === 'error') {
+                alert('Error: ' + decodeURIComponent(message));
+            } else if (status === 'success') {
+                alert('Success: ' + decodeURIComponent(message));
+            }
+
+           
+            clearUrlParams();
+        }
+    };
+</script>
+
+    
+
+    </body>
+    
+</html>

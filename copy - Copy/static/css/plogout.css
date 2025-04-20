@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: url('/static/images/mainbg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #333;
+    flex-direction: column;
+}
+
+.professor_dashboard {
+    position: relative; 
+    width: 100%;
+    max-width: 1500px;   
+    height: 100px;     
+    padding: 15px;
+    background: #ffc0bf;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+    display: block;
+    margin-top: 10px; 
+}
+
+.features {
+    position: relative;
+    width: 100%; 
+    max-width: 1500px; 
+    padding: 30px;
+    background: #ffc0bf;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: left;
+    display: flex;  
+    flex-wrap: nowrap; 
+    align-items: center; 
+    gap:70px;
+    margin-top: 20px;
+    min-height: 90px;
+    overflow-x: auto; 
+}
+
+
+.features button {
+    width: auto; 
+    min-width: 150px; 
+    max-width: 500px; 
+    min-height: 70px;
+    height: 60px;
+    background-color: #ffc0bf;
+    color: rgb(0, 0, 0);
+    font-size: 15.5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center; 
+    justify-content: center; 
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
+    padding: 10px 20px;
+    display: flex;
+    flex-wrap: wrap; 
+}
+
+.features button:hover {
+    background-color: #e17674; 
+}
+
+.features button img.button-icon {
+    width: 60px;  
+    height: 50px;
+    margin-right: 10px; 
+}
+
+h3 {
+    font-size: 50px;
+    color: #d1182d;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+
+.logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.logout-btn a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+}
+
+.logout-btn img.button-icon {
+    width: 60px;
+    height: 50px;
+    margin-right: 10px;
+}
+
+
+.popover {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(134, 110, 110, 0.3);
+    text-align: center;
+    z-index: 9999; 
+    width: 300px;
+    max-width: 90%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+
+#logoutPopover:target {
+    display: block;
+    opacity: 1;
+}
+
+
+.popover-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.confirm-btn, .cancel-btn {
+    display: inline-block;
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    width: 80px;
+    text-align: center;
+}
+
+.confirm-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.cancel-btn {
+    background: #f44336; 
+    color: white;
+}
+
+.confirm-btn:hover {
+    background-color: #4CAF50;
+    opacity: 0.8; 
+}
+
+.cancel-btn:hover {
+    background-color: #f44336; 
+    opacity: 0.8; 
+}
+
+.top-box {
+    position: relative; 
+    width: 90%;
+    max-width: 1500px;
+    height: auto; 
+    min-height: 650px;
+    background-color: white;
+    border-radius: 5px;
+    text-align: center;
+    padding: 20px;
+    z-index: 1000;
+    margin-top: 20px;
+}
