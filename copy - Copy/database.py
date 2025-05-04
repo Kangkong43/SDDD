@@ -46,7 +46,8 @@ def create_table():
                 appointment_time TIME NOT NULL,
                 purpose TEXT NOT NULL,
                 status TEXT DEFAULT 'Pending',
-                office TEXT,        
+                office TEXT,
+                reason TEXT,        
                 FOREIGN KEY (user_id) REFERENCES users(id),
                 FOREIGN KEY (professor_id) REFERENCES users(id)
             )
@@ -105,7 +106,7 @@ def get_user_by_id(user_id):
     finally:
         conn.close()
 
-def create_user(name, email, password, role):
+def create_user(name, email, password, role,):
     """Insert a new user into the database."""
     try:
         conn = get_db()
@@ -397,12 +398,13 @@ def get_appointments_for_student(student_id):
         conn = get_db()
         cursor = conn.cursor()
 
-        # Query to fetch the appointments without start_time and end_time
+        # Query to fetch the appointments along with their id
         query = """
-        SELECT p.name, a.office, a.appointment_date, a.appointment_time,a.purpose, a.status
+        SELECT a.id, p.name, a.office, a.appointment_date, a.appointment_time, a.purpose, a.status, a.reason -- <--- ADDED a.reason
         FROM appointments a
         JOIN users p ON a.professor_id = p.id
-        WHERE a.user_id = ? AND p.role = 'professor'
+        WHERE a.user_id = ?
+        ORDER BY a.appointment_date DESC, a.appointment_time ASC
         """
 
         # Execute the query with the student_id as the parameter
@@ -411,11 +413,16 @@ def get_appointments_for_student(student_id):
         # Fetch all results
         appointments = cursor.fetchall()
         print(appointments)  # Debugging to see the fetched appointments
-        return appointments
+        
+        # Convert the result to a list of dictionaries for easy access
+        appointments_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in appointments]
+        
+        return appointments_dict
 
     except Exception as e:
         print(f"Error fetching appointments: {e}")
         return []
+
 
     
 
@@ -427,11 +434,12 @@ def get_professor_appointments(professor_id):
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT a.id, u.name AS student_name, a.appointment_date,a.appointment_time,
-                   a.purpose, a.status, a.office
+            SELECT a.id, u.name AS student_name, a.appointment_date, a.appointment_time,
+                a.purpose, a.status, a.office, a.reason -- <--- ADDED a.reason
             FROM appointments a
             JOIN users u ON a.user_id = u.id
             WHERE a.professor_id = ?
+            ORDER BY a.appointment_date DESC, a.appointment_time ASC
         ''', (professor_id,))
 
         appointments = cursor.fetchall()
@@ -458,21 +466,39 @@ def clear_all_notifications_db(user_id):
     finally:
         conn.close()
 
-def update_appointment_status(appointment_id, status, professor_id):
+def update_appointment_status(appointment_id, status, professor_id, reason=None):
     """Update an appointment's status in the database and return the student ID"""
     conn = get_db()
     cursor = conn.cursor()
     student_id = None
+ 
 
     try:
         # Get the student_id associated with the appointment
-        cursor.execute("SELECT user_id FROM appointments WHERE id = ?", (appointment_id,))
+        cursor.execute("SELECT user_id FROM appointments WHERE id = ? AND professor_id = ?", (appointment_id, professor_id))
         result = cursor.fetchone()
         if result:
             student_id = result[0]
-            # Update the appointment status, ensuring the professor updating is the one associated with it
-            cursor.execute('''UPDATE appointments SET status = ? WHERE id = ? AND professor_id = ?''', (status, appointment_id, professor_id))
+            print(f"Debug: Updating appointment {appointment_id} with status {status} and reason {reason}")
+
+            if status in ['Rejected', 'Cancelled'] and reason is not None:
+                cursor.execute('''
+                    UPDATE appointments
+                    SET status = ?, reason = ?  -- <-- Updated column name to 'reason'
+                    WHERE id = ?
+                ''', (status, reason, appointment_id))
+            else:
+                # For Approved, Completed, or other statuses (or Rejected/Cancelled with no reason provided),
+                # set the reason column to NULL.
+                cursor.execute('''
+                    UPDATE appointments
+                    SET status = ?, reason = NULL -- <-- Updated column name to 'reason'
+                    WHERE id = ?
+                ''', (status, appointment_id))
+
             conn.commit()
+            print(f"Rows updated: {cursor.rowcount}")
+
             if cursor.rowcount > 0:
                 return True, student_id
             else:
@@ -488,7 +514,6 @@ def update_appointment_status(appointment_id, status, professor_id):
     finally:
         conn.close()
 
-        
 
 
 
@@ -552,3 +577,124 @@ def get_user_notifications(user_id):
         return []
     finally:
         conn.close()
+def cancel_appointment_in_db(appointment_id, student_id):
+    """
+    Cancel a pending appointment for a specific student.
+
+    Args:
+        appointment_id (int): The ID of the appointment to cancel.
+        student_id (int): The ID of the student attempting to cancel.
+
+    Returns:
+        bool: True if the appointment was found and successfully cancelled, False otherwise.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        # Find the appointment and verify it belongs to the student and is pending
+        cursor.execute('''
+            SELECT id FROM appointments
+            WHERE id = ? AND user_id = ? AND status = 'Pending'
+        ''', (appointment_id, student_id))
+
+        appointment = cursor.fetchone()
+
+        if appointment:
+        # If found and pending, update the status to 'Cancelled'
+            cursor.execute('''
+                UPDATE appointments
+                SET status = 'Cancelled', reason = NULL -- <--- ADDED reason = NULL
+                WHERE id = ?
+            ''', (appointment_id,))
+            conn.commit()
+            print(f"Appointment {appointment_id} cancelled by student {student_id}.")
+            return True
+        else:
+            # Appointment not found, or doesn't belong to the student, or is not pending
+            print(f"Cancellation failed for appointment {appointment_id}: Not found, wrong student, or not pending.")
+            return False
+
+    except Exception as e:
+        print(f"Database Error cancelling appointment {appointment_id}: {str(e)}")
+        conn.rollback() # Rollback changes in case of error
+        return False
+    finally:
+        conn.close()
+def check_if_slot_taken(professor_id, appointment_date, appointment_time):
+    """
+    Checks if a specific time slot for a professor is already taken by an
+    APPROVED appointment.
+    Returns True if an APPROVED appointment exists, False otherwise.
+    """
+    conn = None # Initialize connection outside try block
+    try:
+        conn = get_db() # Assuming this function exists and returns a connection
+        cursor = conn.cursor()
+
+        # Modify the query to only count appointments with 'Approved' status
+        # This is the crucial part that should prevent blocking on Rejected/Cancelled
+        query = """
+            SELECT COUNT(*) FROM appointments
+            WHERE professor_id = ?
+            AND appointment_date = ?
+            AND appointment_time = ?
+            AND status = 'Approved' -- Only consider Approved appointments as "taken"
+        """
+        params = (professor_id, appointment_date, appointment_time)
+
+        print(f"DEBUG: Checking if professor {professor_id}'s slot is taken at {appointment_date} {appointment_time} with query: {query} and params: {params}") # Added debug print
+        cursor.execute(query, params)
+        count = cursor.fetchone()[0]
+        print(f"DEBUG: check_if_slot_taken returned count: {count}") # Added debug print
+
+
+        return count > 0 # Return True if count is greater than 0 (meaning an Approved booking exists)
+
+    except Exception as e:
+        print(f"Database error in check_if_slot_taken: {e}")
+        # Log the error properly in a real application
+        return False # Return False in case of database error
+
+    finally:
+        if conn:
+            conn.close() # Ensure the connection is closed
+
+
+def user_has_appointment_at_time(user_id, appointment_date, appointment_time):
+    """
+    Checks if a user has an ACTIVE (Pending or Approved) appointment
+    at the given date and time.
+    Returns True if an active appointment exists, False otherwise.
+    """
+    conn = None # Initialize connection outside try block
+    try:
+        conn = get_db() # Assuming this function exists and returns a connection
+        cursor = conn.cursor()
+
+        # Modify the query to only count appointments with 'Pending' or 'Approved' status
+        # This is the crucial part that excludes Rejected/Cancelled/Completed
+        query = """
+            SELECT COUNT(*) FROM appointments
+            WHERE user_id = ?
+            AND appointment_date = ?
+            AND appointment_time = ?
+            AND status IN ('Pending', 'Approved') -- Only consider active statuses
+        """
+        params = (user_id, appointment_date, appointment_time)
+
+        print(f"DEBUG: Checking if user {user_id} has active appointment at {appointment_date} {appointment_time} with query: {query} and params: {params}") # Added debug print
+        cursor.execute(query, params)
+        count = cursor.fetchone()[0]
+        print(f"DEBUG: user_has_appointment_at_time returned count: {count}") # Added debug print
+
+        return count > 0 # Return True if count is greater than 0 (meaning an active booking exists)
+
+    except Exception as e:
+        print(f"Database error in user_has_appointment_at_time: {e}")
+        # Log the error properly in a real application
+        return False # Return False in case of database error
+
+    finally:
+        if conn:
+            conn.close() # Ensure the connection is closed

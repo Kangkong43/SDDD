@@ -11,7 +11,9 @@
     <div class="sidebar">
         <div class="user-profile">
             <div class="avatar">
-                <i class="fas fa-user-circle"></i>
+                <img id="sidebar-profile-pic" 
+               src="{{ url_for('static', filename='uploads/' + user.profile_picture) if user.profile_picture else url_for('static', filename='images/default.png') }}" 
+               alt="{{ user.name }}'s Profile Picture">
             </div>
             <h1>{{ user.name | upper }}</h1>
             <p>{{ user.role | upper }}</p>
@@ -156,8 +158,7 @@
 
     <script>
         document.querySelector('.settings-form').addEventListener('submit', function(e) {
-        e.preventDefault(); // Prevent default form submission
-
+        e.preventDefault(); 
         const form = this;
         const formData = new FormData(form);
 

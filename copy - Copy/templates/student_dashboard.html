@@ -12,7 +12,9 @@
     <div class="sidebar">
         <div class="user-profile">
             <div class="avatar">
-                <i class="fas fa-user-circle"></i>
+                <img id="sidebar-profile-pic" 
+               src="{{ url_for('static', filename='uploads/' + user.profile_picture) if user.profile_picture else url_for('static', filename='images/default.png') }}" 
+               alt="{{ user.name }}'s Profile Picture">
             </div>
             <h1>{{ user.name | upper }}</h1>
             <p>{{ user.role | upper }}</p>
@@ -135,6 +137,7 @@
                                 <td>{{ appointment.appointment_date }}</td>
                                 <td>{{ appointment.purpose }}</td>
                                 <td class="status-pending">{{ appointment.status }}</td>
+                                <td> <button class="cancel-button" data-appointment-id="{{ appointment.id }}" onclick="cancelAppointment(this)">Cancel</button> </td>
                             </tr>
                         {% else %}
                             <tr>
@@ -306,7 +309,7 @@
     </div>
 
     <script>
-        // Current date display
+
         document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -314,7 +317,64 @@
             day: 'numeric' 
         });
 
-        // Modal functionality (same as before)
+        
+        function cancelAppointment(buttonElement) {
+        
+
+        const appointmentId = buttonElement.dataset.appointmentId;
+        console.log("Appointment ID:", appointmentId);
+        const row = buttonElement.closest('tr');
+
+        if (confirm("Are you sure you want to cancel this appointment?")) {
+            fetch(`/cancel_appointment/${appointmentId}`, {
+                method: 'POST', 
+                headers: {
+                    'Content-Type': 'application/json',
+                }  
+        })
+        .then(response => {
+
+            if (!response.ok) {
+                return response.text().then(text => {
+                try {
+                    const data = JSON.parse(text);
+                    throw new Error(data.message || 'Failed to cancel appointment');
+                } catch (e) {
+                    console.error('Server returned non-JSON:', text);
+                    throw new Error('Unexpected server response. Please try again.');
+                }
+            });
+                }
+                return response.json();
+        })
+        .then(data => {
+        if (data.success) {
+
+            alert(data.message || 'Appointment cancelled successfully!');
+            
+            if (row) {
+                row.remove();
+                const pendingCountElement = document.querySelector('.stat-card.pending .stat-value');
+                if(pendingCountElement) {
+                    pendingCountElement.textContent = parseInt(pendingCountElement.textContent) - 1;
+                }
+            }
+
+        } else {
+
+            alert(data.message || 'Failed to cancel appointment.');
+        }
+        })
+        .catch(error => {
+ 
+            console.error('Error cancelling appointment:', error);
+            alert('An error occurred while trying to cancel the appointment.');
+            alert(error.message);
+        });
+        }
+
+        }
+ 
         document.addEventListener('DOMContentLoaded', function() {
             const modals = {
                 total: document.getElementById("totalModal"),

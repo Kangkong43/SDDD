@@ -50,10 +50,29 @@ body {
   flex-direction: column;
   align-items: center;
   padding-bottom: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0.3rem;
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
+/* Add this to your CSS file */
+.sidebar .user-profile .avatar img {
+  display: block; /* Ensure it behaves like a block element */
+  width: 100px; /* Adjust size as needed */
+  height: 100px; /* Adjust size as needed */
+  border-radius: 50%; /* Make it round */
+  object-fit: cover; /* Ensure the image covers the area without distortion */
+  margin: 0 auto 10px; /* Center the image and add some space below */
+  border: 3px solid var(--card-bg); /* Optional: Add a border like in account settings */
+}
 
+/* You might need to adjust the existing .sidebar .user-profile .avatar styles */
+.sidebar .user-profile .avatar {
+  /* Ensure this container correctly sizes and centers the image */
+  text-align: center; /* Center block/inline-block children */
+  margin-bottom: 5px; /* Space below the avatar */
+  /* Remove any fixed width/height that might conflict with the image size */
+  width: auto; /* Or a specific size if needed */
+  height: auto; /* Or a specific size if needed */
+}
 .avatar {
   font-size: 3.5rem;
   color: rgba(255,255,255,0.9);
@@ -239,23 +258,28 @@ body {
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   padding: 1rem;
+
 }
 
 .appointment-table table {
   width: 100%;
   border-collapse: collapse;
+
 }
 
 .appointment-table th, .appointment-table td {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #eee;
+  text-align: center;
 }
 
 .appointment-table th {
+  
   background-color: #f5f5f5;
   font-weight: 600;
 }
+
 
 /* Status Badges */
 .status-pending {
@@ -294,6 +318,8 @@ body {
   font-weight: 500;
   transition: all 0.3s;
   margin-right: 0.5rem;
+  width: 150px; /* Set a fixed width for both buttons */
+  text-align: center; /* Center text inside the button */
 }
 
 .approve-btn {
@@ -320,12 +346,12 @@ body {
 }
 
 .complete-btn {
-  background: var(--info);
+  background: var(--success);
   color: white;
 }
 
 .complete-btn:hover {
-  background: #1976d2;
+  background: #388e3c;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
@@ -344,20 +370,18 @@ body {
 }
 
 .modal-content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  border-radius: 10px;
-  padding: 2rem;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  background-color: #fefefe;
+  padding: 20px;
+  border: 1px solid #888;
   width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
+  max-width: 600px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  position: relative; 
+  max-height: 95vh; 
   overflow-y: auto;
-  animation: modalOpen 0.3s ease-out;
-}
+
+  }
 
 @keyframes modalOpen {
   from { opacity: 0; transform: translate(-50%, -60%); }
@@ -407,6 +431,157 @@ body {
   font-weight: 600;
 }
 
+
+
+
+
+ /* Styles specific to the Rejection Reason Modal */
+ #rejectionReasonModal .modal-content {
+  max-width: 400px; /* Make the reason modal a bit smaller */
+}
+
+#rejectionReasonModal .modal-content textarea {
+ width: 100%;
+ padding: 10px;
+ margin-bottom: 15px;
+ border: 1px solid #ccc;
+ border-radius: 4px;
+ box-sizing: border-box;
+ resize: vertical;
+ font-size: 1em;
+}
+
+#rejectionReasonModal .modal-content .button-group {
+ text-align: right;
+}
+
+#rejectionReasonModal .modal-content .button-group button {
+ padding: 8px 15px;
+ border: none;
+ border-radius: 4px;
+ cursor: pointer;
+ margin-left: 10px;
+ font-size: 1em;
+}
+
+#rejectionReasonModal .modal-content .button-group .submit-reason-btn {
+ background-color: #4CAF50; /* Green */
+ color: white;
+}
+#rejectionReasonModal .modal-content .button-group .submit-reason-btn:hover {
+ background-color: #45a049;
+}
+
+
+#rejectionReasonModal .modal-content .button-group .cancel-reason-btn {
+ background-color: #f44336; /* Red */
+ color: white;
+}
+#rejectionReasonModal .modal-content .button-group .cancel-reason-btn:hover {
+  background-color: #da190b;
+}
+
+/* Styles specific to the Cancel Reason Modal */
+#cancelReasonModal {
+  display: none; /* Hide the modal by default */
+  
+}
+
+#cancelReasonModal .modal-content {
+  max-width: 400px;
+
+}
+
+#cancelReasonModal .modal-content textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  resize: vertical;
+  font-size: 1em;
+}
+
+#cancelReasonModal .modal-content .button-group {
+  text-align: right;
+}
+
+#cancelReasonModal .modal-content .button-group button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 1em;
+}
+
+#cancelReasonModal .modal-content .button-group .submit-reason-btn {
+  background-color: #4CAF50; /* Green */
+  color: white;
+}
+#cancelReasonModal .modal-content .button-group .submit-reason-btn:hover {
+  background-color: #45a049;
+}
+
+#cancelReasonModal .modal-content .button-group .cancel-reason-btn {
+  background-color: #f44336; /* Red */
+  color: white;
+}
+#cancelReasonModal .modal-content .button-group .cancel-reason-btn:hover {
+  background-color: #da190b;
+}
+
+
+/* Add or update styles for the main modal class if they aren't already there */
+.modal {
+ display: none; /* Hidden by default */
+ position: fixed; /* Stay in place */
+ z-index: 1000; /* Sit on top */
+ left: 0;
+ top: 0;
+ width: 100%; /* Full width */
+ height: 100%; /* Full height */
+ overflow: auto; /* Enable scroll if needed */
+ background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+ padding-top: 60px; /* Location of the box */
+}
+
+.modal-content {
+ background-color: #fefefe;
+ margin: 5% auto; /* 5% from the top and centered */
+ padding: 20px;
+ border: 1px solid #888;
+ width: 90%; /* Responsive width */
+ max-width: 600px; /* Max width for larger screens */
+ border-radius: 8px;
+ box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+ position: relative;
+}
+
+.modal-content h3 {
+ margin-top: 0;
+ color: #333;
+ margin-bottom: 15px;
+}
+
+.modal .close {
+ color: #aaa;
+ float: right;
+ font-size: 28px;
+ font-weight: bold;
+ position: absolute;
+ top: 10px;
+ right: 15px;
+}
+
+.modal .close:hover,
+.modal .close:focus {
+ color: black;
+ text-decoration: none;
+ cursor: pointer;
+}
+
 /* Logout Popover */
 #logoutPopover {
   position: fixed;
@@ -444,30 +619,38 @@ body {
 }
 
 .confirm-btn, .cancel-btn {
-  padding: 0.7rem 1.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
   border-radius: 5px;
+  cursor: pointer;
   font-weight: 500;
   transition: all 0.3s;
-  text-decoration: none;
-  display: inline-block;
+  margin-right: 0.5rem;
+  width: 150px; /* Set a fixed width for both buttons */
+  text-align: center; /* Center text inside the button */
+
 }
 
 .confirm-btn {
-  background: var(--danger);
+  background: var(--success);
   color: white;
 }
 
 .confirm-btn:hover {
-  background: #d32f2f;
+  background: #388e3c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .cancel-btn {
-  background: #e0e0e0;
-  color: var(--text-dark);
+  background: #f44336;
+  color: white;
 }
 
 .cancel-btn:hover {
-  background: #bdbdbd;
+  background: #d32f2f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 /* ===== Responsive Adjustments ===== */

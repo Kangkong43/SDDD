@@ -2,29 +2,49 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import os
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash
-from database import get_user_by_email, create_user, verify_user, get_user_by_id, update_user,add_schedule_to_db,remove_schedule_to_db,get_schedules_for_professor,update_schedule_in_db,get_all_professors,insert_appointment,check_duplicate_appointment,get_appointments_for_student,get_professor_appointments,update_appointment_status,get_user_notifications,create_notification,get_appointment_by_id,clear_all_notifications_db
+from database import (
+    get_user_by_email, create_user, verify_user, get_user_by_id, update_user,
+    add_schedule_to_db, remove_schedule_to_db, get_schedules_for_professor,
+    update_schedule_in_db, get_all_professors, insert_appointment,
+    get_appointments_for_student, get_professor_appointments,
+    update_appointment_status, get_user_notifications, create_notification,
+    get_appointment_by_id, clear_all_notifications_db, cancel_appointment_in_db,
+    check_if_slot_taken, 
+    user_has_appointment_at_time 
+)
 import re
+from email_utils import send_status_email
+import traceback
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Change this in production
+app.secret_key = 'your_secret_key' 
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'facultime.noreply@gmail.com'    
+app.config['MAIL_PASSWORD'] = 'jmod ckqd rywy jtvq'   
 
 # Upload folder for profile pictures
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Ensure the upload folder exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 @app.route('/')
 def index():
     if 'user_id' in session:
         return redirect(url_for('student_dashboard'))
     return render_template('index.html')
+
+
 # Login Logic
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -40,6 +60,7 @@ def login():
             flash('Invalid email or password.', 'error')
     return render_template('login.html')
 
+  
 #Register Logic
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -66,22 +87,17 @@ def student_dashboard():
     user = get_user_by_id(session['user_id'])
     student_id = session['user_id']
     appointments = get_appointments_for_student(student_id)
-   
+  
     appointments = [dict(row) for row in appointments]
+    print("Appointments:", appointments)
     for appointment in appointments:
         appointment_time_24 = appointment['appointment_time']
 
         try:
-           
-          
             time_obj = datetime.strptime(appointment_time_24, '%H:%M')
-           
-          
             appointment['formatted_time'] = time_obj.strftime('%I:%M %p')
-           
         except ValueError:
-          
-            appointment['formatted_time'] = appointment_time_24  # Fallback to the original text format 
+            appointment['formatted_time'] = appointment_time_24 
  
 
    
@@ -98,6 +114,35 @@ def student_dashboard():
                          pending_count=pending_count,
                          approved_count=approved_count,
                          rejected_count=rejected_count) if user else redirect(url_for('login'))
+
+@app.route('/cancel_appointment/<int:appointment_id>', methods=['POST'])
+def cancel_appointment(appointment_id):
+    print(f"Received cancellation request for appointment ID: {appointment_id}") 
+    if 'user_id' not in session:
+        print("User not logged in.") 
+        return jsonify({'success': False, 'message': 'Please log in first.'}), 401 
+
+    student_id = session['user_id']
+    print(f"Logged in student ID: {student_id}") 
+    try:
+        print(f"Calling cancel_appointment_in_db for appointment ID {appointment_id} and student ID {student_id}") 
+        success = cancel_appointment_in_db(appointment_id, student_id)
+        print(f"cancel_appointment_in_db returned: {success}") 
+
+        if success:
+            print("Appointment cancelled successfully in DB.") 
+            return jsonify({'success': True, 'message': 'Appointment cancelled successfully!'}), 200
+
+        else:
+            print("cancel_appointment_in_db returned False.") 
+            return jsonify({'success': False, 'message': 'Failed to cancel appointment. It may not exist, belong to you, or its status is not Pending.'}), 400 
+
+    except Exception as e:
+      
+        print(f"Error cancelling appointment (backend): {str(e)}") 
+        return jsonify({'success': False, 'message': 'An internal error occurred while trying to cancel the appointment.'}), 500 
+
+
 ##------------student  account settings------------##
 
 @app.route('/saccount_settings', methods=['GET', 'POST'])
@@ -164,7 +209,6 @@ def saccount_settings():
         # Update user
         try:
             update_user(user['id'], name, email, password, profile_picture)
-            # Refresh user data
             user = get_user_by_id(session['user_id'])
             
            
@@ -187,18 +231,12 @@ def sbook_appointment():
         return redirect(url_for('login'))
     user = get_user_by_id(session['user_id'])
     professors = get_all_professors()
-    
-
     return render_template('sbook_appointment.html', user=user,professors=professors)
-
-
-
-from datetime import datetime
 
 @app.route('/book_appointment', methods=['POST'])
 def book_appointment():
     if 'user_id' not in session:
-        return jsonify({'status': 'error', 'message': 'Please log in first.'})
+        return jsonify({'status': 'error', 'message': 'Please log in first.'}), 401
 
     user_id = session['user_id']
     appointment_date = request.form.get('appointment_day')
@@ -206,56 +244,131 @@ def book_appointment():
     purpose = request.form.get('purpose')
     professor_id = request.form.get('professor_id')
     office = request.form.get('office')
+    status = "Pending" # New appointments start as Pending
 
-    status = "Pending"
-
+    # Basic Validation
     if not all([appointment_date, appointment_time, purpose, professor_id, office]):
-        return jsonify({'status': 'error', 'message': 'All fields are required!'})
+        return jsonify({'status': 'error', 'message': 'All fields are required!'}), 400
 
     try:
+        # Check 1: Does the *current user* already have *any* active appointment at this exact date and time?
+        user_already_booked_at_time = user_has_appointment_at_time(user_id, appointment_date, appointment_time)
+
+        if user_already_booked_at_time:
+             print(f"User {user_id} already has an appointment at {appointment_date} {appointment_time}")
+             return jsonify({'status': 'error', 'message': 'You already have another appointment scheduled at this exact time. Please choose a different time.'}), 409
+
+        # Check 2: Is this specific time slot already taken by an APPROVED appointment for this professor?
+        is_slot_taken = check_if_slot_taken(professor_id, appointment_date, appointment_time)
+
+        if is_slot_taken:
+            print(f"Slot {appointment_date} {appointment_time} for professor {professor_id} is already taken.")
+            return jsonify({'status': 'error', 'message': 'This time slot is already booked. Please choose another time.'}), 409
+
+        # Check 3: Is the selected time within the professor's available schedule?
+        day_of_week_from_form = request.form.get('appointment_day')
+
         professor_schedules = get_schedules_for_professor(professor_id)
         if not professor_schedules:
-            return jsonify({'status': 'error', 'message': 'This professor has no available schedule.'})
+            return jsonify({'status': 'error', 'message': 'This professor has no available schedule.'}), 404
 
-        # Get day of week from appointment_date
-        day_of_week = request.form.get('appointment_day') 
+        valid_slot_in_schedule = False
+        try:
+            appt_time_obj = datetime.strptime(appointment_time, "%H:%M").time()
 
-        # Check if appointment time is within professor's schedule
-        appt_time = datetime.strptime(appointment_time, "%H:%M")
-        valid_slot = False
+            for sched in professor_schedules:
+                 # Use .get() with default None for safety
+                 sched_start_time_str = sched.get('start_time')
+                 sched_end_time_str = sched.get('end_time')
+                 sched_day = sched.get('day')
 
-        for sched in professor_schedules:
-            if sched['day'] == day_of_week:
-                start = datetime.strptime(sched['start_time'], "%H:%M")
-                end = datetime.strptime(sched['end_time'], "%H:%M")
-                if start <= appt_time <= end:
-                    valid_slot = True
-                    break
+                 if sched_start_time_str and sched_end_time_str and sched_day:
+                     sched_start_time_obj = datetime.strptime(sched_start_time_str, "%H:%M").time()
+                     sched_end_time_obj = datetime.strptime(sched_end_time_str, "%H:%M").time()
 
-        if not valid_slot:
-            return jsonify({'status': 'error', 'message': 'Selected time is not within professor\'s available time slots.'})
+                     if sched_day == day_of_week_from_form and \
+                        sched_start_time_obj <= appt_time_obj <= sched_end_time_obj:
+                         valid_slot_in_schedule = True
+                         break
 
-        if check_duplicate_appointment(professor_id, appointment_date, appointment_time):
-            return jsonify({'status': 'error', 'message': 'You already have an appointment at this time.'})
+        except (ValueError, TypeError) as e:
+             print(f"Error parsing time or schedule data: {e}")
+             traceback.print_exc()
+             return jsonify({'status': 'error', 'message': 'Error validating time slot against professor schedule.'}), 500
 
+
+        if not valid_slot_in_schedule:
+            print(f"Selected time {appointment_time} on {day_of_week_from_form} is not within professor {professor_id}'s schedule.")
+            return jsonify({'status': 'error', 'message': 'Selected time is not within professor\'s available time slots.'}), 400
+
+
+        # If all checks pass, proceed to create the appointment
+        print(f"All checks passed. Inserting appointment for user {user_id} with professor {professor_id} on {appointment_date} at {appointment_time}")
         appointment_id = insert_appointment(user_id, professor_id, appointment_date,
-                                            appointment_time, purpose, status, office)
-        if not appointment_id:
-            return jsonify({'status': 'error', 'message': 'Failed to create appointment.'})
+                                             appointment_time, purpose, status, office)
 
+        if not appointment_id:
+            print("Database insert_appointment failed.")
+            return jsonify({'status': 'error', 'message': 'Failed to create appointment.'}), 500
+
+        # --- Send Notification to Professor ---
+        print("Appointment created successfully. Attempting to send notifications to professor.")
         student = get_user_by_id(user_id)
         student_name = student.get('name', 'Unknown Student') if student else 'Unknown Student'
 
-        title = "New Appointment Request"
-        message = f"Student {student_name} requested an appointment on {appointment_date} at {appointment_time}"
+        notification_title = "New Appointment Request"
+        notification_message = f"Student {student_name} requested an appointment on {appointment_date} at {appointment_time} for '{purpose}'."
 
-        if not create_notification(professor_id, title, message, 'appointment_request', appointment_id):
-            return jsonify({'status': 'warning', 'message': 'Appointment booked, but notification failed.'})
+        notification_status_msg = [] # Initialize list for status messages
 
-        return jsonify({'status': 'success', 'message': 'Appointment booked successfully!'})
+        # --- Send In-App Notification ---
+        try:
+            notification_created = create_notification(professor_id, notification_title, notification_message, 'appointment_request', appointment_id)
+            if notification_created:
+                print("In-app notification created successfully for professor.")
+                notification_status_msg.append("In-app notification sent to professor.")
+            else:
+                print("Warning: Failed to create in-app notification for professor.")
+                notification_status_msg.append("In-app notification to professor failed.")
+        except Exception as notif_e:
+            print(f"Error creating in-app notification: {notif_e}")
+            traceback.print_exc()
+            notification_status_msg.append(f"Error creating in-app notification: {str(notif_e)}")
+
+
+        # --- Send Email Notification to Professor ---
+        professor_details = get_user_by_id(professor_id)
+        professor_email = professor_details.get('email') if professor_details else None
+
+        if professor_email:
+            try:
+                print(f"Attempting to send email to professor {professor_email}...")
+                email_sent_success = send_status_email(professor_email, notification_title, notification_message)
+                if email_sent_success:
+                    print(f"Email notification sent successfully to {professor_email}")
+                    notification_status_msg.append("Email notification sent to professor.")
+                else:
+                    print(f"Failed to send email notification to {professor_email}")
+                    notification_status_msg.append("Email notification to professor failed.")
+            except Exception as email_e:
+                 print(f"Error sending email notification: {email_e}")
+                 traceback.print_exc()
+                 notification_status_msg.append(f"Error sending email notification: {str(email_e)}")
+        else:
+            print(f"Skipped sending email: No email address found for professor ID {professor_id}")
+            notification_status_msg.append("Email notification skipped (professor email missing).")
+
+
+        # Booking successful, return success response with notification status
+        final_message = f'Appointment booked successfully! It is now pending approval. {" ".join(notification_status_msg)}'
+        print(f"Returning success response: {final_message}")
+        return jsonify({'status': 'success', 'message': final_message}), 201 # Created
 
     except Exception as e:
-        return jsonify({'status': 'error', 'message': f'An error occurred: {str(e)}'})
+        # Catch any unexpected errors during the process before notifications
+        print(f"An unexpected error occurred during booking: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'status': 'error', 'message': f'An internal server error occurred: {str(e)}'}), 500
 
 ##------------student notification------------##
 
@@ -276,14 +389,11 @@ def clear_all_notifications():
     success = clear_all_notifications_db(session['user_id'])
     return jsonify(success=success)
 ##------------student logout------------##
-
-
 @app.route('/slogout')
 def slogout():
     session.clear()
     flash('You have been logged out.', 'success')
     return redirect(url_for('login'))
-
 
 ##------------------------------------------------------------------- PROFESSOR ------------------------------------------------------------------------##
 
@@ -299,21 +409,16 @@ def professor_dashboard():
         appointment_time_24 = appointment['appointment_time']
      
   
-        try:
-         
-          
+        try: 
             time_obj = datetime.strptime(appointment_time_24, '%H:%M')
-   
-       
             appointment['formatted_time'] = time_obj.strftime('%I:%M %p')
             
         except ValueError:
-            # Handle cases where the time format is invalid (in case of bad data)
-            appointment['formatted_time'] = appointment_time_24  # Fallback to the original text format 
-    pending_count = len([a for a in appointments if a['status'] == 'Pending'])
-    approved_count = len([a for a in appointments if a['status'] == 'Approved'])
-    completed_count = len([a for a in appointments if a['status'] == 'Completed'])
-    rejected_count = len([a for a in appointments if a['status'] == 'Rejected'])
+            appointment['formatted_time'] = appointment_time_24  
+            pending_count = len([a for a in appointments if a['status'] == 'Pending'])
+            approved_count = len([a for a in appointments if a['status'] == 'Approved'])
+            completed_count = len([a for a in appointments if a['status'] == 'Completed'])
+            rejected_count = len([a for a in appointments if a['status'] == 'Rejected'])
 
     return render_template('professor_dashboard.html', user=user, 
                         appointments=appointments,
@@ -321,58 +426,127 @@ def professor_dashboard():
                         approved_count=approved_count,
                         completed_count=completed_count,
                         rejected_count=rejected_count)
-##
+
 @app.route('/update_status/<int:appointment_id>', methods=['POST'])
-
 def update_status(appointment_id):
-  
     if 'user_id' not in session:
-        return jsonify(success=False, message="Unauthorized")
+        return jsonify(success=False, message="Unauthorized"), 401
 
-    professor_id = session['user_id']  # The logged-in user is the professor
+    professor_id = session['user_id'] 
     data = request.get_json()
-  
-    new_status = data.get('status')
 
+    new_status = data.get('status')
+    reason = data.get('reason') 
+
+    print(f"Received status: {new_status}, reason: {reason}") 
+   
     if not appointment_id or not new_status:
-        return jsonify(success=False, message="Missing appointment ID or status")
+        return jsonify(success=False, message="Missing appointment ID or status"), 400
+
+    allowed_statuses = ['Approved', 'Rejected', 'Completed', 'Cancelled']
+    if new_status not in allowed_statuses:
+        return jsonify(success=False, message="Invalid status provided."), 400
+
+    if new_status in ['Rejected', 'Cancelled'] and not reason:
+         return jsonify(success=False, message=f"Reason is required for status: {new_status}."), 400
 
     try:
-        # Update the appointment status in the database and get the student ID
-        success, student_id = update_appointment_status(appointment_id, new_status, professor_id)
+        print("Attempting to update appointment status in database...")
+        success, student_id = update_appointment_status(appointment_id, new_status, professor_id, reason)
+
+        message_body = ""
+        notification_title = "Appointment Status Update"
+        email_sent_success = False
+        notification_created = False
+        notification_status_msg = [] 
+
         if success and student_id:
-            # After updating the status, send a notification to the student
-            appointment = get_appointment_by_id(appointment_id)
-            
-            if appointment:
-                student_details = get_user_by_id(student_id)
-                if student_details:
-                    student_name = student_details['name']
-                    professor_details = get_user_by_id(professor_id)
-                    professor_name = professor_details.get('name', 'The professor') # Get professor's name
+          
+            print("Successfully updated appointment status, attempting to send notifications...")
 
-                    # Create the notification message
-                    message = f"Dear {student_name}, your appointment scheduled for {appointment['appointment_date']} at {appointment['appointment_time']} has been {new_status.lower()} by {professor_name}."
-                    notification_type = 'appointment_status'
-                    # Create the notification
-                    notification_created = create_notification(student_id, "Appointment Status Update", message, notification_type)
+            try:
+                appointment = get_appointment_by_id(appointment_id)
 
-                    if notification_created:
-                        return jsonify(success=True)
+                if appointment:
+                   
+                    student_details = get_user_by_id(student_id)
+                    if student_details:
+                        student_name = student_details.get('name', 'Student')
+                        student_email = student_details.get('email') 
+                        professor_details = get_user_by_id(professor_id)
+                        professor_name = professor_details.get('name', 'The professor')
+
+                        message_body = f"Dear {student_name},\n\nYour appointment scheduled for {appointment.get('appointment_date', 'a certain date')} at {appointment.get('appointment_time', 'a certain time')} has been {new_status.lower()} by {professor_name}."
+
+                     
+                        stored_reason = appointment.get('reason')
+                        if new_status in ['Rejected', 'Cancelled'] and stored_reason:
+                            message_body += f"\nReason: {stored_reason}"
+
+                        message_body += "\n\nPlease check your dashboard for details." 
+
+                        notification_type = 'appointment_status' 
+                        print("Attempting to create in-app notification...")
+                        notification_created = create_notification(student_id, notification_title, message_body, notification_type, appointment_id)
+                        if notification_created:
+                             print("In-app notification created successfully.")
+                             notification_status_msg.append("In-app notification sent.")
+                        else:
+                             print("Warning: Failed to create in-app notification.")
+                             notification_status_msg.append("In-app notification failed.")
+
+
+                      
+                        if student_email: 
+                             print(f"Attempting to send email to {student_email}...")
+                             email_sent_success = send_status_email(student_email, notification_title, message_body)
+                             if email_sent_success:
+                                  print(f"Email notification sent to {student_email}")
+                                  notification_status_msg.append("Email notification sent.")
+                             else:
+                                  print(f"Failed to send email notification to {student_email}")
+                                  notification_status_msg.append("Email notification failed.")
+                        else:
+                             print(f"Skipped sending email: No email address found for student ID {student_id}")
+                             notification_status_msg.append("Email notification skipped (no email address).")
+
                     else:
-                        return jsonify(success=False, message="Failed to create notification")
+                        print("Could not retrieve student details for notification.")
+                        notification_status_msg.append("Notification failed (student details missing).")
                 else:
-                    return jsonify(success=False, message="Could not retrieve student details")
-            else:
-                return jsonify(success=False, message="Could not retrieve appointment details")
+                    print("Could not retrieve appointment details after update for notification.")
+                    notification_status_msg.append("Notification failed (appointment details missing).")
+
+            except Exception as notification_error:
+               
+                 print(f"An error occurred during notification/email sending: {str(notification_error)}")
+                 traceback.print_exc()
+                 notification_status_msg.append(f"Notification process encountered an error: {str(notification_error)}")
+
+            final_message = f'Appointment status updated to {new_status}! {" ".join(notification_status_msg)}'
+            print(f"Returning success response: {final_message}")
+            return jsonify(success=True, message=final_message), 200
 
         elif not success:
-            return jsonify(success=False, message="Failed to update appointment status (check if the appointment exists and belongs to this professor)")
+  
+            print("Internal update_appointment_status failed.")
+
+            return jsonify(success=False, message="Failed to update appointment status (check if the appointment exists and belongs to this professor)"), 400 
+
         else:
-            return jsonify(success=False, message="Failed to retrieve student ID after updating status")
+         
+            print("An unexpected issue occurred after updating status (success is True but student_id is None?).")
+
+            return jsonify(success=False, message="An unexpected error occurred."), 500 
+
 
     except Exception as e:
-        return jsonify(success=False, message=f"An error occurred: {str(e)}")
+   
+        print(f"An unexpected error occurred in update_status route: {str(e)}")
+
+        traceback.print_exc()
+        return jsonify(success=False, message=f"An internal server error occurred: {str(e)}"), 500
+
 ##------------professor  account settings------------##
 
 @app.route('/paccountSettings', methods=['GET', 'POST'])
@@ -391,7 +565,6 @@ def paccountSettings():
         confirm_password = request.form.get('confirm-password', '')
         profile_picture = user.get('profile_picture')
 
-        # Validation
         if not name or len(name) < 3:
             return jsonify({'error': 'Name must be at least 3 characters'}), 400
 
@@ -425,7 +598,7 @@ def paccountSettings():
 
         try:
             update_user(user['id'], name, email, password, profile_picture)
-            user = get_user_by_id(session['user_id']) #refresh user data
+            user = get_user_by_id(session['user_id']) 
             return jsonify({'message': 'Profile updated successfully!'}), 200
         except Exception as e:
             app.logger.error(f"Error updating user {user['id']}: {str(e)}")
@@ -506,18 +679,13 @@ def remove_schedule():
 
 @app.route('/get_schedules', methods=['GET'])
 def get_schedules():
-    # Validate session first
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized - Please log in'}), 401
-
-    # Get professor ID from session (more secure than URL parameter)
     prof_id = session['user_id']
 
     
     try:
         schedules = get_schedules_for_professor(prof_id)
-     
-        # Convert schedules to proper JSON format
         formatted_schedules = []
         for sched in schedules:
             formatted_schedules.append({
@@ -572,12 +740,10 @@ def respond_to_appointment():
     appointment_id = data['appointment_id']
     action = data['action']
     
-    # Update appointment status
     new_status = 'Approved' if action == 'approved' else 'Rejected'
     success = update_appointment_status(appointment_id, new_status)
     
     if success:
-        # Mark notification as read or create a new one
         return jsonify(success=True)
     else:
         return jsonify(success=False, message="Failed to update appointment")

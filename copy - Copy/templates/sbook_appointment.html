@@ -11,7 +11,9 @@
     <div class="sidebar">
         <div class="user-profile">
             <div class="avatar">
-                <i class="fas fa-user-circle"></i>
+                <img id="sidebar-profile-pic" 
+               src="{{ url_for('static', filename='uploads/' + user.profile_picture) if user.profile_picture else url_for('static', filename='images/default.png') }}" 
+               alt="{{ user.name }}'s Profile Picture">
             </div>
             <h1>{{ user.name | upper }}</h1>
             <p>{{ user.role | upper }}</p>
@@ -75,7 +77,6 @@
             {% for professor in professors %}
             <div class="instructor-card">
                 <div class="instructor-name">{{ professor[1] }}</div>
-                <!-- Pass professor's id and name to the function -->
                 <button class="schedule-button" onclick="openScheduleModal('{{ professor[0] }}', '{{ professor[1] }}')">View Schedule</button>
             </div>
             {% endfor %}
@@ -114,7 +115,7 @@
         <form id="booking-form">
 
         <input type="hidden" id="professor-id" name="professor_id" value="">
-        <input type="hidden" id="office-input" name="office" value=""> <!-- Hidden input for office data -->
+        <input type="hidden" id="office-input" name="office" value=""> 
         <div>
             <label for="appointment-day">Day of Appointment:</label>
             <input type="text" id="appointment-day" name="appointment_day" readonly>
@@ -165,7 +166,25 @@ function openScheduleModal(profId, profName) {
             let tableBody = document.getElementById('schedule-body');
             tableBody.innerHTML = ''; 
 
-            if (data.success) {
+            if (data.success && data.schedules.length > 0) {
+
+                 
+                const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+              
+                data.schedules.sort((a, b) => {
+                    const dayAIndex = dayOrder.indexOf(a.day);
+                    const dayBIndex = dayOrder.indexOf(b.day);
+
+                   
+                    if (dayAIndex === -1 && dayBIndex === -1) return 0; 
+                    if (dayAIndex === -1) return 1; 
+                    if (dayBIndex === -1) return -1; 
+
+                    return dayAIndex - dayBIndex; 
+                });
+
+    
                 data.schedules.forEach(row => {
                     let newRow = document.createElement('tr');
                     newRow.innerHTML = `

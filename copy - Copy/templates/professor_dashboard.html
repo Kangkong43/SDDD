@@ -11,7 +11,9 @@
     <div class="sidebar">
         <div class="user-profile">
             <div class="avatar">
-                <i class="fas fa-user-circle"></i>
+                <img id="sidebar-profile-pic" 
+               src="{{ url_for('static', filename='uploads/' + user.profile_picture) if user.profile_picture else url_for('static', filename='images/default.png') }}" 
+               alt="{{ user.name }}'s Profile Picture">
             </div>
             <h1>{{ user.name | upper }}</h1>
             <p>{{ user.role | upper }}</p>
@@ -144,8 +146,8 @@
                         <td class="status-pending">{{ appointment.status }}</td>
                         <td>
                             <div class="button-group"></div>
-                            <button class="approve-btn" onclick="updateStatus('{{ appointment.id }}', 'Approved')">Approve</button>
-                            <button class="reject-btn" onclick="updateStatus('{{ appointment.id }}', 'Rejected')">Reject</button>
+                            <button class="approve-btn" onclick="handleStatusUpdate('{{ appointment.id }}', 'Approved')">Approve</button>
+                            <button class="reject-btn" onclick="handleStatusUpdate('{{ appointment.id }}', 'Rejected')">Reject</button>
                             </div>
                         </td>
                     </tr>
@@ -171,7 +173,7 @@
                         <th>Day</th>
                         <th>Purpose</th>
                         <th>Status</th>
-                        <th>Action</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -187,6 +189,9 @@
                         <td>
                             <button class="complete-btn" onclick="updateStatus('{{ appointment.id }}', 'Completed')">
                                 Complete
+                            </button>
+                            <button class="cancel-btn" onclick="showCancelModal('{{ appointment.id }}')">
+                                Cancel
                             </button>
                         </td>
                     </tr>
@@ -306,6 +311,21 @@
             </div>
         </div>
     </div>
+
+    <div id="cancelReasonModal" class="modal">
+        <div class="modal-content">
+          <span id="closeCancelModal" class="close">&times;</span>
+          <h2>Cancel Appointment</h2>
+          <textarea id="cancelReasonInput" placeholder="Enter reason for cancellation"></textarea>
+          <div class="button-group">
+            <button class="submit-reason-btn" id="submitCancelReasonBtn">Submit</button>
+            <button class="cancel-reason-btn" id="cancelModalBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+      
+      
+
     <div id="rejectedModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -338,105 +358,368 @@
             </div>
         </div>
     </div>
+
+    <div id="rejectionReasonModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeReasonModal">&times;</span>
+            <h3>Reason for Rejection</h3>
+            <textarea id="rejectionReasonInput" rows="4" placeholder="Enter reason for rejecting this appointment..."></textarea>
+            <div class="button-group">
+                <button class="submit-reason-btn" id="submitReasonBtn">Submit</button>
+                <button class="cancel-reason-btn" id="cancelReasonBtn">Cancel</button>
+               
+            </div>
+        </div>
+    </div>
+
+
     <script>
-         document.addEventListener('DOMContentLoaded', function() {
-        
+         let currentAppointmentId = null;
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    
+        document.addEventListener('DOMContentLoaded', function() {
+    
             const modals = {
                 pending: document.getElementById("pendingModal"),
                 approved: document.getElementById("approvedModal"),
                 completed: document.getElementById("completedModal"),
-                rejected: document.getElementById("rejectedModal") 
+                rejected: document.getElementById("rejectedModal")
             };
-
-       
+    
             const buttons = {
                 pending: document.getElementById("pendingModalBtn"),
                 approved: document.getElementById("approvedModalBtn"),
                 completed: document.getElementById("completedModalBtn"),
-                rejected: document.getElementById("rejectedModalBtn") 
+                rejected: document.getElementById("rejectedModalBtn")
             };
-
     
-            const closeButtons = document.getElementsByClassName("close");
 
-      
+            const rejectionReasonModal = document.getElementById("rejectionReasonModal");
+            const rejectionReasonInput = document.getElementById("rejectionReasonInput");
+            const closeReasonModalBtn = document.getElementById("closeReasonModal");
+            const cancelReasonBtn = document.getElementById("cancelReasonBtn");
+            const submitReasonBtn = document.getElementById("submitReasonBtn");
+            
+            const cancelReasonModal = document.getElementById("cancelReasonModal");
+            const cancelReasonInput = document.getElementById("cancelReasonInput");
+            const closeCancelModal = document.getElementById("closeCancelModal");
+            const cancelModalBtn = document.getElementById("cancelModalBtn");
+            const submitCancelReasonBtn = document.getElementById("submitCancelReasonBtn");
+            
+
+        document.querySelectorAll('.cancelBtn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                currentAppointmentId = this.getAttribute('data-appointment-id');
+                cancelReasonModal.style.display = 'block';
+            });
+        });
+
+        closeCancelModal.onclick = function () {
+            cancelReasonModal.style.display = "none";
+            cancelReasonInput.value = '';
+        };
+        cancelModalBtn.onclick = closeCancelModal;
+
+        submitCancelReasonBtn.onclick = function () {
+            const reason = cancelReasonInput.value.trim();
+            if (!reason) {
+                alert("Please provide a reason for cancellation.");
+                return;
+            }
+            if (!currentAppointmentId) {
+                alert("No appointment selected.");
+                return;
+            }
+            updateStatus(currentAppointmentId, 'Cancelled', reason);
+            cancelReasonModal.style.display = "none";
+            cancelReasonInput.value = '';
+        };
+                    console.log("DOM fully loaded.");
+            console.log("Rejection modal elements:", {
+                modal: rejectionReasonModal,
+                input: rejectionReasonInput,
+                closeBtn: closeReasonModalBtn,
+                cancelBtn: cancelReasonBtn,
+                submitBtn: submitReasonBtn
+            });
+    
+    
+
             Object.keys(modals).forEach(key => {
-           
                 if (buttons[key]) {
                     buttons[key].onclick = function() {
+                        console.log(`Opening ${key} modal.`);
                         modals[key].style.display = "block";
                     }
                 }
-
-           
                 if (modals[key]) {
                     modals[key].querySelector('.close').onclick = function() {
+                        console.log(`Closing ${key} modal.`);
                         modals[key].style.display = "none";
                     }
                 }
             });
+    
+           
+            if (closeReasonModalBtn) { 
+                closeReasonModalBtn.onclick = function() {
+                    console.log("Close reason modal button clicked.");
+                    rejectionReasonModal.style.display = "none";
+                    rejectionReasonInput.value = ''; 
+                }
+            } else {
+                console.error("Close reason modal button not found!");
+            }
+    
+    
+          
+            if (cancelReasonBtn) { 
+                cancelReasonBtn.onclick = function() {
+                    console.log("Cancel reason button clicked.");
+                    rejectionReasonModal.style.display = "none";
+                    rejectionReasonInput.value = ''; 
+                }
+            } else {
+                 console.error("Cancel reason button not found!");
+            }
+    
+    
+           
+            if (submitReasonBtn) {
+                submitReasonBtn.onclick = function() {
+                    console.log("Submit reason button clicked.");
+                    const reason = rejectionReasonInput.value.trim();
+                    if (reason) {
+                        console.log("Reason provided, calling updateStatus...");
+                      
+                        updateStatus(currentAppointmentId, 'Rejected', reason);
+                        rejectionReasonModal.style.display = "none"; 
+                        rejectionReasonInput.value = ''; 
+                    } else {
+                        console.log("No reason provided, showing alert.");
+                        alert("Please provide a reason for rejection.");
+                    }
+                }
+            } else {
+                 console.error("Submit reason button not found!");
+            }
+    
+    
+    if (closeCancelModalBtn) {
+        closeCancelModalBtn.onclick = function() {
+            console.log("Close cancel reason modal button clicked.");
+            cancelReasonModal.style.display = "none";
+            cancelReasonInput.value = '';
+        }
+    } else { console.error("Close cancel reason modal button not found!"); }
 
-       
+    if (cancelModalBtn) {
+        cancelModalBtn.onclick = function() {
+            console.log("Cancel reason button clicked.");
+            cancelReasonModal.style.display = "none";
+            cancelReasonInput.value = ''; 
+        }
+    } else { console.error("Cancel reason button not found!"); }
+
+    if (submitCancelReasonBtn) {
+        submitCancelReasonBtn.onclick = function() {
+            console.log("Submit cancel reason button clicked.");
+            const reason = cancelReasonInput.value.trim();
+            if (reason) {
+                console.log("Reason provided, calling updateStatus...");
+              
+                updateStatus(currentAppointmentId, 'Cancelled', reason);
+               
+                cancelReasonModal.style.display = "none"; 
+                cancelReasonInput.value = ''; 
+            } else {
+                console.log("No reason provided, showing alert.");
+                alert("Please provide a reason for cancellation.");
+            }
+        }
+    } else { console.error("Submit cancel reason button not found!"); }
+
+         
             window.onclick = function(event) {
+          
                 Object.keys(modals).forEach(key => {
                     if (event.target == modals[key]) {
                         modals[key].style.display = "none";
                     }
                 });
+               
+                if (rejectionReasonModal && event.target == rejectionReasonModal) { 
+                    console.log("Clicked outside rejection modal, closing.");
+                    rejectionReasonModal.style.display = "none";
+                }
             }
-
-          
-            document.addEventListener('keydown', function(event) {
+    
+         
+             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape') {
+                    console.log("Escape key pressed.");
                     Object.keys(modals).forEach(key => {
-                        modals[key].style.display = "none";
+                        if (modals[key] && modals[key].style.display === "block") { 
+                            console.log(`Closing ${key} modal with Escape.`);
+                            modals[key].style.display = "none";
+                        }
                     });
+                    if (rejectionReasonModal && rejectionReasonModal.style.display === "block") { 
+                        console.log("Closing rejection modal with Escape.");
+                        rejectionReasonModal.style.display = "none";
+                    }
+                  
+                    if (cancelReasonModal && cancelReasonModal.style.display === "block") { 
+                        console.log("Closing cancel modal with Escape.");
+                        cancelReasonModal.style.display = "none";
+                    }
+               
                 }
             });
-        });
 
-        
-    function updateStatus(appointmentId, newStatus) {
-        if (newStatus === 'Rejected' && !confirm('Are you sure you want to reject this appointment?')) {
-            return;
-        }
-        if (newStatus === 'Approved' && !confirm('Approve this appointment?')) {
-            return;
-        }
-        if (newStatus === 'Completed' && !confirm('Mark this appointment as completed?')) {
-            return;
-        }
-
-        fetch(`/update_status/${appointmentId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-             
-            },
-            body: JSON.stringify({ status: newStatus })
-        })
-        .then(response => {
-            if (response.ok) {
-                location.reload(); // Refresh the page to reflect changes
-            } else {
-                alert('Failed to update status');
+    
+    
+      
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+                }
+            });
+        }); 
+    
+    
+       
+        function handleStatusUpdate(appointmentId, newStatus) {
+            console.log(`handleStatusUpdate called for ID: ${appointmentId}, Status: ${newStatus}`);
+           
+            if (newStatus === 'Rejected') {
+               
+                currentAppointmentId = appointmentId;
+                
+                const rejectionModal = document.getElementById("rejectionReasonModal");
+                if (rejectionModal) { 
+                     console.log("Showing rejection reason modal.");
+                     rejectionModal.style.display = "block";
+                } else {
+                     console.error("Rejection reason modal element not found!");
+                }
+                return; 
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while updating status.');
-        });
-    }
+    
+           
+            if (newStatus === 'Approved') {
+                 console.log("Status is Approved, showing confirmation.");
+                 if (!confirm('Approve this appointment?')) {
+                    console.log("Approval cancelled by user.");
+                    return;
+                }
+                 console.log("Approval confirmed by user.");
+            }
+            if (newStatus === 'Completed') {
+                 console.log("Status is Completed, showing confirmation.");
+                 if (!confirm('Mark this appointment as completed?')) {
+                     console.log("Completion cancelled by user.");
+                     return;
+                 }
+                 console.log("Completion confirmed by user.");
+            }
+    
+    
+          
+            console.log("Calling updateStatus function.");
+            updateStatus(appointmentId, newStatus);
+        }
+    
+      
+        function updateStatus(appointmentId, newStatus, reason = null) { 
+            console.log(`updateStatus called for ID: ${appointmentId}, Status: ${newStatus}, Reason: ${reason}`);
+            const requestBody = { status: newStatus };
+            if ((newStatus === 'Rejected' || newStatus === 'Cancelled') && reason !== null) {
+                requestBody.reason = reason;
+                console.log("Adding reason to request body:", requestBody);
+            } else {
+                console.log("No reason added to request body.");
+            }
+    
+            console.log("Sending fetch request to:", `/update_status/${appointmentId}`);
+            fetch(`/update_status/${appointmentId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                   
+                },
+                body: JSON.stringify(requestBody) 
+            })
+            .then(response => {
+                console.log("Received fetch response:", response);
 
-         // Current date display
-         document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("Server returned non-JSON response");
+                }
+
+                return response.json().then(data => {
+                    data.ok = response.ok;
+                    data.status = response.status; 
+                    console.log("Parsed JSON data:", data);
+                    return data;
+                });
+            })
+            .then(data => {
+                console.log("Processing response data in .then():", data);
+                if (data.ok && data.success) {
+                    alert(data.message || 'Status updated successfully!');
+                    console.log("Status update successful, reloading page.");
+                    location.reload(); 
+                } else {
      
-        </script>
+                    console.log("Status update failed:", data.message);
+                    alert(data.message || 'Failed to update status.');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error during status update:', error);
+
+                alert('An error occurred: ' + (error.message || 'Could not connect to the server.'));
+            });
+        }
+        function showCancelModal(appointmentId) {
+            currentAppointmentId = appointmentId;
+            const modal = document.getElementById("cancelReasonModal");
+            if (modal) {
+                modal.style.display = "block";
+            } else {
+                console.error("cancelReasonModal not found");
+            }
+        }
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("closeCancelModal")?.addEventListener("click", function () {
+        document.getElementById("cancelReasonModal").style.display = "none";
+    });
+
+    document.getElementById("cancelModalBtn")?.addEventListener("click", function () {
+        document.getElementById("cancelReasonModal").style.display = "none";
+    });
+
+
+    window.onclick = function (event) {
+        const modal = document.getElementById("cancelReasonModal");
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    };
+});
+    
+    
+    </script>
         
 </body>
 </html>

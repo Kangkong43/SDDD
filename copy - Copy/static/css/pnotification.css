@@ -49,8 +49,28 @@ body {
   flex-direction: column;
   align-items: center;
   padding-bottom: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0.3rem;
   border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+/* Add this to your CSS file */
+.sidebar .user-profile .avatar img {
+  display: block; /* Ensure it behaves like a block element */
+  width: 100px; /* Adjust size as needed */
+  height: 100px; /* Adjust size as needed */
+  border-radius: 50%; /* Make it round */
+  object-fit: cover; /* Ensure the image covers the area without distortion */
+  margin: 0 auto 10px; /* Center the image and add some space below */
+  border: 3px solid var(--card-bg); /* Optional: Add a border like in account settings */
+}
+
+/* You might need to adjust the existing .sidebar .user-profile .avatar styles */
+.sidebar .user-profile .avatar {
+  /* Ensure this container correctly sizes and centers the image */
+  text-align: center; /* Center block/inline-block children */
+  margin-bottom: 5px; /* Space below the avatar */
+  /* Remove any fixed width/height that might conflict with the image size */
+  width: auto; /* Or a specific size if needed */
+  height: auto; /* Or a specific size if needed */
 }
 
 .avatar {
